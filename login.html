@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OddZilla - Login</title>
+  <style>
+    :root {
+      --bg-main: #041240;
+      --highlight: #1264d1;
+      --text-light: #fff;
+      --text-dark: #333;
+      --error: #ff4d4d;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { 
+      font-family: Arial, sans-serif; 
+      background: var(--bg-main); 
+      color: var(--text-light); 
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    .login-container {
+      background: rgba(255,255,255,0.1);
+      padding: 30px;
+      border-radius: 10px;
+      width: 100%;
+      max-width: 400px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+    }
+    .login-container h2 {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .form-group {
+      margin-bottom: 15px;
+    }
+    .form-group label {
+      display: block;
+      margin-bottom: 5px;
+    }
+    .form-group input {
+      width: 100%;
+      padding: 10px;
+      border: none;
+      border-radius: 5px;
+      background: rgba(255,255,255,0.9);
+    }
+    button {
+      width: 100%;
+      padding: 10px;
+      background: var(--highlight);
+      border: none;
+      border-radius: 5px;
+      color: var(--text-light);
+      font-weight: bold;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+    button:hover {
+      opacity: 0.9;
+    }
+    .error {
+      color: var(--error);
+      margin-top: 5px;
+      font-size: 14px;
+    }
+    .switch-form {
+      text-align: center;
+      margin-top: 20px;
+    }
+    .switch-form a {
+      color: var(--highlight);
+      text-decoration: none;
+    }
+    .switch-form a:hover {
+      text-decoration: underline;
+    }
+    .guest-option {
+      text-align: center;
+      margin-top: 25px;
+      padding-top: 15px;
+      border-top: 1px solid rgba(255,255,255,0.2);
+    }
+    
+    .guest-btn {
+      background: #555;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 16px;
+      transition: background 0.3s;
+    }
+    
+    .guest-btn:hover {
+      background: #777;
+    }
+    .admin-check {
+      display: flex;
+      align-items: center;
+      margin: 10px 0;
+    }
+    .admin-check input {
+      margin-right: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="login-container">
+    <div id="login-form">
+      <h2>Login</h2>
+      <div class="form-group">
+        <label for="login-email">Email</label>
+        <input type="email" id="login-email" required>
+      </div>
+      <div class="form-group">
+        <label for="login-password">Senha</label>
+        <input type="password" id="login-password" required>
+      </div>
+      <div id="login-error" class="error"></div>
+      <button id="login-button">Entrar</button>
+      <div class="switch-form">
+        Não tem conta? <a href="#" id="show-register">Cadastre-se</a>
+      </div>
+    </div>
+
+    <div id="register-form" style="display: none;">
+      <h2>Cadastro</h2>
+      <div class="form-group">
+        <label for="register-name">Nome</label>
+        <input type="text" id="register-name" required>
+      </div>
+      <div class="form-group">
+        <label for="register-email">Email</label>
+        <input type="email" id="register-email" required>
+      </div>
+      <div class="form-group">
+        <label for="register-password">Senha</label>
+        <input type="password" id="register-password" required>
+      </div>
+      <div class="form-group">
+        <label for="register-confirm">Confirmar Senha</label>
+        <input type="password" id="register-confirm" required>
+      </div>
+      <div class="admin-check">
+        <input type="checkbox" id="register-admin">
+        <label for="register-admin">Administrador</label>
+      </div>
+      <div id="register-error" class="error"></div>
+      <button id="register-button">Cadastrar</button>
+      <div class="switch-form">
+        Já tem conta? <a href="#" id="show-login">Fazer Login</a>
+      </div>
+    </div>
+    
+    <div class="guest-option">
+      <p>Ou acesse como visitante:</p>
+      <button class="guest-btn" id="guest-button">Entrar sem Login</button>
+    </div>
+  </div>
+
+  <script>
+    document.getElementById('show-register').addEventListener('click', (e) => {
+      e.preventDefault();
+      document.getElementById('login-form').style.display = 'none';
+      document.getElementById('register-form').style.display = 'block';
+    });
+
+    document.getElementById('show-login').addEventListener('click', (e) => {
+      e.preventDefault();
+      document.getElementById('register-form').style.display = 'none';
+      document.getElementById('login-form').style.display = 'block';
+    });
+
+    document.getElementById('login-button').addEventListener('click', login);
+    document.getElementById('register-button').addEventListener('click', register);
+    document.getElementById('guest-button').addEventListener('click', entrarComoVisitante);
+
+    function login() {
+      const email = document.getElementById('login-email').value;
+      const password = document.getElementById('login-password').value;
+      const errorElement = document.getElementById('login-error');
+      
+      if (!email || !password) {
+        errorElement.textContent = 'Por favor, preencha todos os campos';
+        return;
+      }
+      
+      localStorage.setItem('user', JSON.stringify({ 
+        email: email,
+        name: email.split('@')[0] // Usa a parte antes do @ como nome
+      }));
+      window.location.href = 'index.html';
+    }
+
+    function register() {
+      const name = document.getElementById('register-name').value;
+      const email = document.getElementById('register-email').value;
+      const password = document.getElementById('register-password').value;
+      const confirm = document.getElementById('register-confirm').value;
+      const isAdmin = document.getElementById('register-admin').checked;
+      const errorElement = document.getElementById('register-error');
+      
+      if (password !== confirm) {
+        errorElement.textContent = 'As senhas não coincidem';
+        return;
+      }
+      
+      if (!name || !email || !password) {
+        errorElement.textContent = 'Por favor, preencha todos os campos';
+        return;
+      }
+      
+      localStorage.setItem('user', JSON.stringify({ 
+        name: name, 
+        email: email,
+        admin: isAdmin
+      }));
+      window.location.href = 'index.html';
+    }
+
+    function entrarComoVisitante() {
+      localStorage.setItem('user', JSON.stringify({ 
+        guest: true,
+        name: "Visitante"
+      }));
+      window.location.href = 'index.html';
+    }
+  </script>
+</body>
+</html>

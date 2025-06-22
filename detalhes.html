@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Oddzilla - Detalhes do Jogo</title>
+  <link rel="stylesheet" href="detalhes.css">
+  <style>
+    header {
+      background-color: #141d48;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 20px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    
+    .user-info {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: white;
+    }
+    
+    .logout-btn {
+      background: none;
+      border: 1px solid white;
+      color: white;
+      padding: 5px 10px;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    
+    .logout-btn:hover {
+      background: rgba(255,255,255,0.1);
+    }
+    
+    .back-btn {
+      background: #0074cc;
+      color: white;
+      border: none;
+      padding: 8px 15px;
+      border-radius: 4px;
+      cursor: pointer;
+      margin-top: 20px;
+      margin-left: 20px;
+    }
+    
+    .back-btn:hover {
+      background: #005fa3;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <img src="img/logo.png" alt="Oddzilla Logo">
+    <div class="user-info" id="user-info">
+      <!-- Preenchido via JavaScript -->
+    </div>
+  </header>
+
+  <button class="back-btn" onclick="window.history.back()">← Voltar</button>
+
+  <div id="jogo">
+    <!-- Conteúdo será preenchido via JavaScript -->
+  </div>
+
+  <script src="detalhes.js"></script>
+  <script>
+    // Verificar login e mostrar informações do usuário
+    document.addEventListener('DOMContentLoaded', () => {
+      // Se não tem usuário, redireciona para login
+      if (!localStorage.getItem('user')) {
+        window.location.href = 'login.html';
+        return;
+      }
+      
+      const user = JSON.parse(localStorage.getItem('user'));
+      const userInfo = document.getElementById('user-info');
+      
+      if (user.guest) {
+        userInfo.innerHTML = `
+          <span>Visitante</span>
+          <button class="logout-btn" id="logout-btn">Sair</button>
+        `;
+      } else {
+        userInfo.innerHTML = `
+          <span>${user.name || user.email}</span>
+          <button class="logout-btn" id="logout-btn">Sair</button>
+        `;
+      }
+      
+      document.getElementById('logout-btn').addEventListener('click', () => {
+        localStorage.removeItem('user');
+        window.location.href = 'login.html';
+      });
+    });
+  </script>
+</body>
+</html>

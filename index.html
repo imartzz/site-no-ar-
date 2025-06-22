@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>OddZilla - Home</title>
+  <style>
+    :root {
+      --nav-bg: #0c153e;
+      --tab-bg: #1264d1;
+      --bg-main: #041240;
+      --sidebar-bg: #d0d0d0;
+      --table-bg: #e0e0e0;
+      --text-dark: #111;
+      --text-light: #fff;
+      --highlight: #1264d1;
+      --link-color: #4da6ff;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: Arial, sans-serif; background: var(--bg-main); color: var(--text-light); }
+    header { 
+      background: var(--nav-bg); 
+      padding: 10px 20px; 
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .user-info {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .logout-btn {
+      background: none;
+      border: 1px solid var(--text-light);
+      color: var(--text-light);
+      padding: 5px 10px;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .logout-btn:hover {
+      background: rgba(255,255,255,0.1);
+    }
+    .admin-btn {
+      background: #ff9800;
+      color: white;
+      border: none;
+      padding: 5px 10px;
+      border-radius: 4px;
+      cursor: pointer;
+      margin-right: 10px;
+    }
+    .admin-btn:hover {
+      background: #e68a00;
+    }
+    .tabs { display: flex; background: var(--tab-bg); }
+    .tab { padding: 10px 20px; cursor: pointer; }
+    .tab.active { background: var(--highlight); font-weight: bold; }
+    .main { display: flex; height: calc(100vh - 84px); }
+    .sidebar { width: 200px; background: var(--sidebar-bg); color: var(--text-dark); overflow-y: auto; }
+    .sidebar ul { list-style: none; }
+    .sidebar li { padding: 10px; cursor: pointer; }
+    .sidebar li.active, .sidebar li:hover { background: var(--highlight); color: var(--text-light); }
+    .content { flex: 1; padding: 20px; overflow-y: auto; }
+    table { width: 100%; border-collapse: collapse; background: var(--table-bg); color: var(--text-dark); }
+    th, td { border: 1px solid #aaa; padding: 8px; text-align: left; }
+    th { background: var(--sidebar-bg); }
+    .match-link { 
+      color: var(--link-color); 
+      text-decoration: none; 
+      font-weight: bold;
+    }
+    .match-link:hover { text-decoration: underline; }
+    @media (max-width: 768px) {
+      .main { flex-direction: column; }
+      .sidebar { width: 100%; height: auto; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>OddZilla</h1>
+    <div class="user-info" id="user-info">
+      <!-- Preenchido via JavaScript -->
+    </div>
+  </header>
+  <div class="tabs">
+    <div class="tab active" data-sport="futebol">Futebol</div>
+    <div class="tab" data-sport="basquete">Basquete</div>
+  </div>
+  <div class="main">
+    <nav class="sidebar">
+      <ul id="competition-list"></ul>
+    </nav>
+    <div class="content">
+      <h2 id="content-title">Ligas Populares</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Horário</th>
+            <th>Partida</th>
+            <th>Casa</th>
+            <th>Empate</th>
+            <th>Fora</th>
+          </tr>
+        </thead>
+        <tbody id="games-body"></tbody>
+      </table>
+    </div>
+  </div>
+  <script>
+    const API_URL = 'https://33765672-f51d-46f5-b276-32beaed4448a-00-3qd9ymtpuc1xv.worf.replit.dev:3000';
+    let esportes = [], competicoes = [], jogos = [];
+    let currentSport = 'futebol', currentComp = null;
+    
+    // Verificar se o usuário está logado
+    document.addEventListener('DOMContentLoaded', () => {
+      // Se não tem usuário, redireciona para login
+      if (!localStorage.getItem('user')) {
+        window.location.href = 'login.html';
+        return;
+      }
+      
+      const user = JSON.parse(localStorage.getItem('user'));
+      const userInfo = document.getElementById('user-info');
+      
+      if (user.guest) {
+        userInfo.innerHTML = `
+          <span>Visitante</span>
+          <button class="logout-btn" id="logout-btn">Sair</button>
+        `;
+      } else {
+        let adminButton = '';
+        if (user.admin) {
+          adminButton = '<button class="admin-btn" id="admin-btn">Admin</button>';
+        }
+        userInfo.innerHTML = `
+          ${adminButton}
+          <span>${user.name || user.email}</span>
+          <button class="logout-btn" id="logout-btn">Sair</button>
+        `;
+      }
+      
+      document.getElementById('logout-btn').addEventListener('click', () => {
+        localStorage.removeItem('user');
+        window.location.href = 'login.html';
+      });
+
+      if (user.admin) {
+        document.getElementById('admin-btn').addEventListener('click', () => {
+          window.location.href = 'admin.html';
+        });
+      }
+      
+      init();
+    });
+
+    async function init() {
+      try {
+        [esportes, competicoes, jogos] = await Promise.all([
+          fetchEsportes(), fetchCompeticoes(), fetchJogos()
+        ]);
+      } catch (e) { console.error(e); return; }
+      setupTabs(); renderSidebar(); renderGames();
+    }
+
+    function fetchEsportes() {
+      return fetch(`${API_URL}/esportes`).then(r=>r.json());
+    }
+    function fetchCompeticoes() {
+      return fetch(`${API_URL}/competicoes`).then(r=>r.json());
+    }
+    function fetchJogos() {
+      return fetch(`${API_URL}/jogos`).then(r=>r.json());
+    }
+
+    function setupTabs() {
+      document.querySelectorAll('.tab').forEach(tab=>{
+        tab.onclick = ()=>{
+          document.querySelector('.tab.active').classList.remove('active');
+          tab.classList.add('active');
+          currentSport = tab.dataset.sport;
+          currentComp = null;
+          renderSidebar(); renderGames();
+        };
+      });
+    }
+
+    function renderSidebar() {
+      const ul = document.getElementById('competition-list'); ul.innerHTML = '';
+      const list = [{id:null,nome:'Ligas Populares'}].concat(
+        competicoes.filter(c=>c.esporte===currentSport)
+      );
+      list.forEach(c=>{
+        const li = document.createElement('li'); li.textContent = c.nome; li.dataset.id = c.id;
+        if((currentComp===null&&c.id===null)||c.id===currentComp) li.classList.add('active');
+        li.onclick = ()=>{ document.querySelector('.sidebar li.active').classList.remove('active'); li.classList.add('active'); currentComp=c.id; renderGames(); };
+        ul.appendChild(li);
+      });
+    }
+
+    function renderGames() {
+      const title = document.getElementById('content-title');
+      title.textContent = currentComp ? competicoes.find(c => c.id === currentComp).nome : 'Ligas Populares';
+      const tbody = document.getElementById('games-body');
+      tbody.innerHTML = '';
+
+      let list = jogos.filter(j => j.esporte === currentSport);
+      if (currentComp) list = list.filter(j => j.competicao === currentComp);
+
+      list.forEach(j => {
+        const tr = document.createElement('tr');
+        const time = new Date(j.horario).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+
+        const getBest = (col) => {
+          let melhorCasa = null;
+          let maiorOdd = 0;
+
+          for (const casa in j.odds) {
+            const odd = j.odds[casa][col];
+            if (odd && odd > maiorOdd) {
+              maiorOdd = odd;
+              melhorCasa = casa;
+            }
+          }
+
+          return {
+            odd: maiorOdd.toFixed(2),
+            logo: melhorCasa ? `<img src="logos/${melhorCasa}.png" alt="${melhorCasa}" style="height: 20px; margin-top: 4px;" />` : ''
+          };
+        };
+
+        const casa = getBest('casa');
+        const empate = getBest('empate');
+        const fora = getBest('fora');
+
+        tr.innerHTML = `
+          <td>${time}</td>
+          <td>
+            <a href="detalhes.html?id=${j.id}" class="match-link">
+              ${j.time_casa} vs ${j.time_fora}
+            </a>
+          </td>
+          <td>${casa.odd}<br>${casa.logo}</td>
+          <td>${empate.odd}<br>${empate.logo}</td>
+          <td>${fora.odd}<br>${fora.logo}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+  </script>
+</body>
+</html>

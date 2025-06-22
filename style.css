@@ -1,0 +1,32 @@
+ <style>
+    :root {
+      --nav-bg: #0c153e;
+      --tab-bg: #1264d1;
+      --bg-main: #041240;
+      --sidebar-bg: #d0d0d0;
+      --table-bg: #e0e0e0;
+      --text-dark: #111;
+      --text-light: #fff;
+      --highlight: #1264d1;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: Arial, sans-serif; background: var(--bg-main); color: var(--text-light); }
+    header { background: var(--nav-bg); padding: 10px 20px; }
+    header h1 { margin: 0; font-size: 1.5rem; }
+    .tabs { display: flex; background: var(--tab-bg); }
+    .tab { padding: 10px 20px; cursor: pointer; }
+    .tab.active { background: var(--highlight); font-weight: bold; }
+    .main { display: flex; height: calc(100vh - 84px); }
+    .sidebar { width: 200px; background: var(--sidebar-bg); color: var(--text-dark); overflow-y: auto; }
+    .sidebar ul { list-style: none; }
+    .sidebar li { padding: 10px; cursor: pointer; }
+    .sidebar li.active, .sidebar li:hover { background: var(--highlight); color: var(--text-light); }
+    .content { flex: 1; padding: 20px; overflow-y: auto; }
+    table { width: 100%; border-collapse: collapse; background: var(--table-bg); color: var(--text-dark); }
+    th, td { border: 1px solid #aaa; padding: 8px; text-align: left; }
+    th { background: var(--sidebar-bg); }
+    @media (max-width: 768px) {
+      .main { flex-direction: column; }
+      .sidebar { width: 100%; height: auto; }
+    }
+  </style>

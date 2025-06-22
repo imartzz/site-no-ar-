@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Oddzilla - Administração</title>
+  <link rel="stylesheet" href="admin.css">
+  <style>
+    /* Adicione este estilo para o botão de logout no admin */
+    .user-info-admin {
+      position: absolute;
+      top: 10px;
+      right: 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: white;
+    }
+    .logout-btn-admin {
+      background: none;
+      border: 1px solid white;
+      color: white;
+      padding: 5px 10px;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .logout-btn-admin:hover {
+      background: rgba(255,255,255,0.1);
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <img src="img/logo.png" alt="Oddzilla" class="logo">
+    <h1>Administração de Odds</h1>
+    <div class="user-info-admin" id="user-info-admin">
+      <!-- Preenchido via JavaScript -->
+    </div>
+  </header>
+
+  <main>
+    <!-- Formulário de Adição -->
+    <section class="form-add">
+      <h2>Adicionar Novo Jogo</h2>
+      <form id="add-game-form">
+        <select id="esporte" required>
+          <option value="">Selecione Esporte</option>
+        </select>
+
+        <select id="competicao" disabled required>
+          <option value="">Selecione Competição</option>
+        </select>
+
+        <input type="text" id="time_casa" placeholder="Time Casa" required>
+        <input type="text" id="time_fora" placeholder="Time Fora" required>
+        <input type="datetime-local" id="horario" required>
+
+        <div class="odds-container">
+          <div class="bookmaker">
+            <h3>Bet365</h3>
+            <input type="number" step="0.01" id="bet365_casa" placeholder="Casa" required>
+            <input type="number" step="0.01" id="bet365_empate" placeholder="Empate" class="empate-input">
+            <input type="number" step="0.01" id="bet365_fora" placeholder="Fora" required>
+          </div>
+
+          <div class="bookmaker">
+            <h3>Betano</h3>
+            <input type="number" step="0.01" id="betano_casa" placeholder="Casa" required>
+            <input type="number" step="0.01" id="betano_empate" placeholder="Empate" class="empate-input">
+            <input type="number" step="0.01" id="betano_fora" placeholder="Fora" required>
+          </div>
+
+          <div class="bookmaker">
+            <h3>Betfair</h3>
+            <input type="number" step="0.01" id="betfair_casa" placeholder="Casa" required>
+            <input type="number" step="0.01" id="betfair_empate" placeholder="Empate" class="empate-input">
+            <input type="number" step="0.01" id="betfair_fora" placeholder="Fora" required>
+          </div>
+        </div>
+
+        <button type="submit">Adicionar Jogo</button>
+      </form>
+    </section>
+
+    <!-- Tabela de Gerenciamento -->
+    <section class="table-manage">
+      <h2>Gerenciar Odds</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Jogo</th>
+            <th>Competição</th>
+            <th>Esporte</th>
+            <th colspan="3">Bet365</th>
+            <th colspan="3">Betano</th>
+            <th colspan="3">Betfair</th>
+            <th>Ações</th>
+          </tr>
+          <tr class="subheader">
+            <th></th>
+            <th></th>
+            <th></th>
+            <th>Casa</th>
+            <th>Empate</th>
+            <th>Fora</th>
+            <th>Casa</th>
+            <th>Empate</th>
+            <th>Fora</th>
+            <th>Casa</th>
+            <th>Empate</th>
+            <th>Fora</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="jogos-table"></tbody>
+      </table>
+    </section>
+  </main>
+
+  <footer>
+    <p>© Oddzilla 2025</p>
+  </footer>
+
+  <script src="admin.js"></script>
+  <script>
+    // Verificar se o usuário está logado e é administrador
+    document.addEventListener('DOMContentLoaded', () => {
+      const userData = localStorage.getItem('user');
+      if (!userData) {
+        window.location.href = 'login.html';
+        return;
+      }
+      
+      const user = JSON.parse(userData);
+      const userInfoAdmin = document.getElementById('user-info-admin');
+      
+      if (user.guest) {
+        userInfoAdmin.innerHTML = `
+          <span>Visitante</span>
+          <button class="logout-btn-admin" id="logout-btn-admin">Sair</button>
+        `;
+        // Redirecionar porque visitante não pode acessar admin
+        alert('Acesso restrito a administradores.');
+        window.location.href = 'index.html';
+      } else {
+        if (!user.admin) {
+          // Se não for admin, redirecionar
+          alert('Acesso restrito a administradores.');
+          window.location.href = 'index.html';
+          return;
+        }
+        userInfoAdmin.innerHTML = `
+          <span>${user.name || user.email}</span>
+          <button class="logout-btn-admin" id="logout-btn-admin">Sair</button>
+        `;
+      }
+      
+      document.getElementById('logout-btn-admin').addEventListener('click', () => {
+        localStorage.removeItem('user');
+        window.location.href = 'login.html';
+      });
+    });
+  </script>
+</body>
+</html>
