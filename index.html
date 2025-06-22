@@ -17,7 +17,7 @@
       --link-color: #4da6ff;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: Arial, sans-serif; background: var(--bg-main); color: var(--text-light); }
+    body { font-family: Arial, sans-serif; background: var(--bg极 main); color: var(--text-light); }
     header { 
       background: var(--nav-bg); 
       padding: 10px 20px; 
@@ -152,8 +152,7 @@
         userInfo.innerHTML = `
           ${adminButton}
           <span>${user.nome || user.email}</span>
-          <button class="logout-btn" id极
-="logout-btn">Sair</button>
+          <button class="logout-btn" id="logout-btn">Sair</button>
         `;
       }
       
@@ -174,93 +173,161 @@
 
     async function init() {
       try {
+        // Carregar dados em paralelo
         [esportes, competicoes, jogos] = await Promise.all([
-          fetchEsportes(), fetchCompeticoes(), fetchJogos()
+          fetchData('esportes'),
+          fetchData('competicoes'),
+          fetchData('jogos')
         ]);
-      } catch (e) { console.error(e); return; }
-      setupTabs(); renderSidebar(); renderGames();
+        
+        setupTabs(); 
+        renderSidebar(); 
+        renderGames();
+        
+      } catch (e) { 
+        console.error('Erro ao carregar dados:', e);
+        showError();
+      }
     }
 
-    function fetchEsportes() {
-      return fetch(`${API_URL}/esportes`).then(r=>r.json());
+    async function fetchData(endpoint) {
+      try {
+        const response = await fetch(`${API_URL}/${endpoint}`);
+        if (!response.ok) throw new Error(`Erro ${response.status}`);
+        return await response.json();
+      } catch (error) {
+        console.error(`Erro ao buscar ${endpoint}:`, error);
+        return [];
+      }
     }
-    function fetchCompeticoes() {
-      return fetch(`${API_URL}/competicoes`).then(r=>r.json());
-    }
-    function fetchJogos() {
-      return fetch(`${API_URL}/jogos`).then(r=>r.json());
+
+    function showError() {
+      document.getElementById('games-body').innerHTML = `
+        <tr>
+          <td colspan="5" style="text-align:center;color:red;">
+            Erro ao carregar jogos. Tente recarregar a página.
+          </td>
+        </tr>
+      `;
     }
 
     function setupTabs() {
-      document.querySelectorAll('.tab').forEach(tab=>{
-        tab.onclick = ()=>{
+      document.querySelectorAll('.tab').forEach(tab => {
+        tab.addEventListener('click', () => {
           document.querySelector('.tab.active').classList.remove('active');
           tab.classList.add('active');
           currentSport = tab.dataset.sport;
           currentComp = null;
-          renderSidebar(); renderGames();
-        };
+          renderSidebar(); 
+          renderGames();
+        });
       });
     }
 
     function renderSidebar() {
-      const ul = document.getElementById('competition-list'); ul.innerHTML = '';
-      const list = [{id:null,nome:'Ligas Populares'}].concat(
-        competicoes.filter(c=>c.esporte===currentSport)
-      );
-      list.forEach(c=>{
-        const li = document.createElement('li'); li.textContent = c.nome; li.dataset.id = c.id;
-        if((currentComp===null&&c.id===null)||c.id===currentComp) li.classList.add('active');
-        li.onclick = ()=>{ document.querySelector('.sidebar li.active').classList.remove('active'); li.classList.add('active'); currentComp=c.id; renderGames(); };
-        ul.appendChild(li);
+      const ul = document.getElementById('competition-list');
+      ul.innerHTML = '';
+      
+      // Adicionar item "Ligas Populares"
+      const ligasItem = document.createElement('li');
+      ligasItem.textContent = 'Ligas Populares';
+      ligasItem.dataset.id = null;
+      ligasItem.classList.add('active');
+      ligasItem.addEventListener('click', () => {
+        currentComp = null;
+        document.querySelectorAll('.sidebar li').forEach(li => li.classList.remove('active'));
+        ligasItem.classList.add('active');
+        renderGames();
       });
+      ul.appendChild(ligasItem);
+      
+      // Adicionar competições específicas do esporte
+      competicoes
+        .filter(c => c.esporte === currentSport)
+        .forEach(c => {
+          const li = document.createElement('li');
+          li.textContent = c.nome;
+          li.dataset.id = c.id;
+          li.addEventListener('click', () => {
+            currentComp = c.id;
+            document.querySelectorAll('.sidebar li').forEach(li => li.classList.remove('active'));
+            li.classList.add('active');
+            renderGames();
+          });
+          ul.appendChild(li);
+        });
     }
 
     function renderGames() {
       const title = document.getElementById('content-title');
-      title.textContent = currentComp ? competicoes.find(c => c.id === currentComp).nome : 'Ligas Populares';
+      if (currentComp) {
+        const comp = competicoes.find(c => c.id === currentComp);
+        title.textContent = comp ? comp.nome : 'Competição Desconhecida';
+      } else {
+        title.textContent = 'Ligas Populares';
+      }
+      
       const tbody = document.getElementById('games-body');
       tbody.innerHTML = '';
 
-      let list = jogos.filter(j => j.esporte === currentSport);
-      if (currentComp) list = list.filter(j => j.competicao === currentComp);
+      let filteredJogos = jogos.filter(j => j.esporte === currentSport);
+      
+      if (currentComp) {
+        filteredJogos = filteredJogos.filter(j => j.competicao === currentComp);
+      }
 
-      list.forEach(j => {
+      if (filteredJogos.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="5" style="text-align:center;">
+              Nenhum jogo disponível
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      filteredJogos.forEach(jogo => {
         const tr = document.createElement('tr');
-        const time = new Date(j.horario).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+        const time = new Date(jogo.horario).toLocaleTimeString('pt-BR', { 
+          hour: '2-digit', 
+          minute: '2-digit' 
+        });
 
-        const getBest = (col) => {
-          let melhorCasa = null;
-          let maiorOdd = 0;
-
-          for (const casa in j.odds) {
-            const odd = j.odds[casa][col];
-            if (odd && odd > maiorOdd) {
-              maiorOdd = odd;
-              melhorCasa = casa;
+        // Função para encontrar a melhor odd
+        const getBestOdd = (resultado) => {
+          let bestValue = 0;
+          let bestCasa = '';
+          
+          for (const [casa, odds] of Object.entries(jogo.odds)) {
+            const value = odds[resultado];
+            if (value !== undefined && value > bestValue) {
+              bestValue = value;
+              bestCasa = casa;
             }
           }
-
+          
           return {
-            odd: maiorOdd.toFixed(2),
-            logo: melhorCasa ? `<img src="logos/${melhorCasa}.png" alt="${melhorCasa}" style="height: 20px; margin-top: 4px;" />` : ''
+            value: bestValue.toFixed(2),
+            casa: bestCasa,
+            logo: bestCasa ? `<img src="logos/${bestCasa}.png" alt="${bestCasa}" style="height: 20px; margin-top: 4px;" />` : ''
           };
         };
 
-        const casa = getBest('casa');
-        const empate = getBest('empate');
-        const fora = getBest('fora');
+        const casa = getBestOdd('casa');
+        const empate = jogo.odds.bet365?.empate !== undefined ? getBestOdd('empate') : { value: '-', logo: '' };
+        const fora = getBestOdd('fora');
 
         tr.innerHTML = `
           <td>${time}</td>
           <td>
-            <a href="detalhes.html?id=${j.id}" class="match-link">
-              ${j.time_casa} vs ${j.time_fora}
+            <a href="detalhes.html?id=${jogo.id}" class="match-link">
+              ${jogo.time_casa} vs ${jogo.time_fora}
             </a>
           </td>
-          <td>${casa.odd}<br>${casa.logo}</td>
-          <td>${empate.odd}<br>${empate.logo}</td>
-          <td>${fora.odd}<br>${fora.logo}</td>
+          <td>${casa.value}<br>${casa.logo}</td>
+          <td>${empate.value}<br>${empate.logo}</td>
+          <td>${fora.value}<br>${fora.logo}</td>
         `;
         tbody.appendChild(tr);
       });
