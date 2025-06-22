@@ -17,7 +17,7 @@
       --link-color: #4da6ff;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: Arial, sans-serif; background: var(--bg极 main); color: var(--text-light); }
+    body { font-family: Arial, sans-serif; background: var(--bg-main); color: var(--text-light); }
     header { 
       background: var(--nav-bg); 
       padding: 10px 20px; 
@@ -34,7 +34,8 @@
       background: none;
       border: 1px solid var(--text-light);
       color: var(--text-light);
-      padding: 5px 10px;
+      padding: 5px 10极
+px;
       border-radius: 4px;
       cursor: pointer;
     }
@@ -61,6 +62,7 @@
     .sidebar ul { list-style: none; }
     .sidebar li { padding: 10px; cursor: pointer; }
     .sidebar li.active, .sidebar li:hover { background: var(--highlight); color: var(--text-light); }
+    .sidebar li.favoritos { background: gold; color: black; font-weight: bold; }
     .content { flex: 1; padding: 20px; overflow-y: auto; }
     table { width: 100%; border-collapse: collapse; background: var(--table-bg); color: var(--text-dark); }
     th, td { border: 1px solid #aaa; padding: 8px; text-align: left; }
@@ -71,6 +73,13 @@
       font-weight: bold;
     }
     .match-link:hover { text-decoration: underline; }
+    .favorite-icon { 
+      cursor: pointer; 
+      font-size: 24px; 
+      display: inline-block;
+      width: 30px;
+      text-align: center;
+    }
     @media (max-width: 768px) {
       .main { flex-direction: column; }
       .sidebar { width: 100%; height: auto; }
@@ -97,6 +106,7 @@
       <table>
         <thead>
           <tr>
+            <th>Favorito</th>
             <th>Horário</th>
             <th>Partida</th>
             <th>Casa</th>
@@ -108,6 +118,8 @@
       </table>
     </div>
   </div>
+
+  <script src="favoritos.js"></script>
   <script>
     const API_URL = 'https://33765672-f51d-46f5-b276-32beaed4448a-00-3qd9ymtpuc1xv.worf.replit.dev:3000';
     let esportes = [], competicoes = [], jogos = [];
@@ -124,6 +136,7 @@
       const user = JSON.parse(localStorage.getItem('user'));
       const userInfo = document.getElementById('user-info');
       
+      // Visitantes não podem acessar
       if (user.guest) {
         userInfo.innerHTML = `
           <span>Visitante</span>
@@ -204,7 +217,7 @@
     function showError() {
       document.getElementById('games-body').innerHTML = `
         <tr>
-          <td colspan="5" style="text-align:center;color:red;">
+          <td colspan="6" style="text-align:center;color:red;">
             Erro ao carregar jogos. Tente recarregar a página.
           </td>
         </tr>
@@ -235,7 +248,7 @@
       ligasItem.classList.add('active');
       ligasItem.addEventListener('click', () => {
         currentComp = null;
-        document.querySelectorAll('.sidebar li').forEach(li => li.classList.remove('active'));
+        document.querySelectorAll('#competition-list li').forEach(li => li.classList.remove('active'));
         ligasItem.classList.add('active');
         renderGames();
       });
@@ -250,17 +263,32 @@
           li.dataset.id = c.id;
           li.addEventListener('click', () => {
             currentComp = c.id;
-            document.querySelectorAll('.sidebar li').forEach(li => li.classList.remove('active'));
+            document.querySelectorAll('#competition-list li').forEach(li => li.classList.remove('active'));
             li.classList.add('active');
             renderGames();
           });
           ul.appendChild(li);
         });
+      
+      // Adicionar item "Favoritos"
+      const favoritosItem = document.createElement('li');
+      favoritosItem.innerHTML = '⭐ Favoritos';
+      favoritosItem.dataset.id = 'favoritos';
+      favoritosItem.classList.add('favoritos');
+      favoritosItem.addEventListener('click', () => {
+        currentComp = 'favoritos';
+        document.querySelectorAll('#competition-list li').forEach(li => li.classList.remove('active'));
+        favoritosItem.classList.add('active');
+        renderGames();
+      });
+      ul.appendChild(favoritosItem);
     }
 
     function renderGames() {
       const title = document.getElementById('content-title');
-      if (currentComp) {
+      if (currentComp === 'favoritos') {
+        title.textContent = 'Jogos Favoritos';
+      } else if (currentComp) {
         const comp = competicoes.find(c => c.id === currentComp);
         title.textContent = comp ? comp.nome : 'Competição Desconhecida';
       } else {
@@ -272,14 +300,17 @@
 
       let filteredJogos = jogos.filter(j => j.esporte === currentSport);
       
-      if (currentComp) {
+      if (currentComp === 'favoritos') {
+        const favoritos = getFavoritos();
+        filteredJogos = filteredJogos.filter(j => favoritos.includes(j.id));
+      } else if (currentComp) {
         filteredJogos = filteredJogos.filter(j => j.competicao === currentComp);
       }
 
       if (filteredJogos.length === 0) {
         tbody.innerHTML = `
           <tr>
-            <td colspan="5" style="text-align:center;">
+            <td colspan="6" style="text-align:center;">
               Nenhum jogo disponível
             </td>
           </tr>
@@ -309,27 +340,57 @@
           
           return {
             value: bestValue.toFixed(2),
-            casa: bestCasa,
-            logo: bestCasa ? `<img src="logos/${bestCasa}.png" alt="${bestCasa}" style="height: 20px; margin-top: 4px;" />` : ''
+            casa: bestCasa
           };
         };
 
         const casa = getBestOdd('casa');
-        const empate = jogo.odds.bet365?.empate !== undefined ? getBestOdd('empate') : { value: '-', logo: '' };
+        const empate = jogo.odds.bet365?.empate !== undefined ? getBestOdd('empate') : { value: '-' };
         const fora = getBestOdd('fora');
 
         tr.innerHTML = `
+          <td>
+            <span class="favorite-icon" data-id="${jogo.id}">
+              ${isFavorito(jogo.id) ? '★' : '☆'}
+            </span>
+          </td>
           <td>${time}</td>
           <td>
             <a href="detalhes.html?id=${jogo.id}" class="match-link">
               ${jogo.time_casa} vs ${jogo.time_fora}
             </a>
           </td>
-          <td>${casa.value}<br>${casa.logo}</td>
-          <td>${empate.value}<br>${empate.logo}</td>
-          <td>${fora.value}<br>${fora.logo}</td>
+          <td>${casa.value} (${casa.casa})</td>
+          <td>${empate.value} ${empate.casa ? '('+empate.casa+')' : ''}</td>
+          <td>${fora.value} (${fora.casa})</td>
         `;
         tbody.appendChild(tr);
+      });
+      
+      // Adicionar event listeners aos ícones de favorito
+      tbody.querySelectorAll('.favorite-icon').forEach(icon => {
+        icon.addEventListener('click', function() {
+          const jogoId = this.dataset.id;
+          const favoritado = toggleFavorito(jogoId);
+          
+          this.textContent = favoritado ? '★' : '☆';
+          
+          // Se estivermos na aba de favoritos, remover a linha após desfavoritar
+          if (currentComp === 'favoritos') {
+            const tr = this.closest('tr');
+            tr.remove();
+            // Se não houver mais linhas, mostrar mensagem
+            if (tbody.children.length === 0) {
+              tbody.innerHTML = `
+                <tr>
+                  <td colspan="6" style="text-align:center;">
+                    Nenhum jogo disponível
+                  </td>
+                </tr>
+              `;
+            }
+          }
+        });
       });
     }
   </script>

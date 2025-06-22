@@ -88,7 +88,12 @@ function renderizarJogo(jogo, competicao, data, hora) {
 
   document.getElementById('jogo').innerHTML = `
     <div class="estadio">Estádio: ${jogo.local || '-'}</div>
-    <div class="partida">${jogo.time_casa} <br> X <br> ${jogo.time_fora}</div>
+    <div class="partida">
+      ${jogo.time_casa} <br> X <br> ${jogo.time_fora}
+      <span class="favorite-icon-detail" data-id="${jogo.id}" style="color: ${isFavorito(jogo.id) ? 'gold' : 'white'}">
+        ${isFavorito(jogo.id) ? '★' : '☆'}
+      </span>
+    </div>
     <div class="data">${data} - ${hora}</div>
     <div class="campeonato">${competicao}</div>
     
@@ -201,6 +206,20 @@ function renderizarJogo(jogo, competicao, data, hora) {
 
     document.getElementById('botaoVotar').addEventListener('click', votar);
     document.getElementById('enviarComentario').addEventListener('click', enviarComentario);
+  }
+
+  // Adicionar evento ao ícone de favorito
+  const favoriteIcon = document.querySelector('.favorite-icon-detail');
+  if (favoriteIcon) {
+    favoriteIcon.addEventListener('click', function() {
+      const jogoId = this.dataset.id;
+      const favoritado = toggleFavorito(jogoId);
+      
+      this.textContent = favoritado ? '★' : '☆';
+      this.style.color = favoritado ? 'gold' : 'white';
+      
+      alert(favoritado ? 'Adicionado aos favoritos!' : 'Removido dos favoritos!');
+    });
   }
 
   // Carregar dados que não dependem de login
