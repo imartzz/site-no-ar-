@@ -122,9 +122,12 @@
 
   <script src="admin.js"></script>
   <script>
+    const API_URL = 'https://33765672-f51d-46f5-b276-32beaed4448a-00-3qd9ymtpuc1xv.worf.replit.dev:3000';
+    
     // Verificar se o usuário está logado e é administrador
-    document.addEventListener('DOMContentLoaded', () => {
+    document.addEventListener('DOMContentLoaded', async () => {
       const userData = localStorage.getItem('user');
+      
       if (!userData) {
         window.location.href = 'login.html';
         return;
@@ -133,25 +136,37 @@
       const user = JSON.parse(userData);
       const userInfoAdmin = document.getElementById('user-info-admin');
       
+      // Visitantes não podem acessar
       if (user.guest) {
         userInfoAdmin.innerHTML = `
           <span>Visitante</span>
           <button class="logout-btn-admin" id="logout-btn-admin">Sair</button>
         `;
-        // Redirecionar porque visitante não pode acessar admin
         alert('Acesso restrito a administradores.');
         window.location.href = 'index.html';
-      } else {
-        if (!user.admin) {
-          // Se não for admin, redirecionar
+        return;
+      }
+      
+      // Verificar se o usuário é realmente admin na API
+      try {
+        const response = await fetch(`${API_URL}/usuarios?id=${user.id}`);
+        const dbUser = await response.json();
+        
+        if (dbUser.length === 0 || !dbUser[0].admin) {
           alert('Acesso restrito a administradores.');
           window.location.href = 'index.html';
           return;
         }
+        
         userInfoAdmin.innerHTML = `
-          <span>${user.name || user.email}</span>
+          <span>${user.nome || user.email}</span>
           <button class="logout-btn-admin" id="logout-btn-admin">Sair</button>
         `;
+        
+      } catch (err) {
+        console.error('Erro ao verificar permissões:', err);
+        alert('Erro ao verificar permissões. Tente novamente.');
+        window.location.href = 'index.html';
       }
       
       document.getElementById('logout-btn-admin').addEventListener('click', () => {

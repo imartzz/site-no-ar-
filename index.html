@@ -114,7 +114,7 @@
     let currentSport = 'futebol', currentComp = null;
     
     // Verificar se o usuário está logado
-    document.addEventListener('DOMContentLoaded', () => {
+    document.addEventListener('DOMContentLoaded', async () => {
       // Se não tem usuário, redireciona para login
       if (!localStorage.getItem('user')) {
         window.location.href = 'login.html';
@@ -130,13 +130,28 @@
           <button class="logout-btn" id="logout-btn">Sair</button>
         `;
       } else {
+        // Verificar se o usuário é admin na API
+        let isAdmin = false;
+        
+        try {
+          const response = await fetch(`${API_URL}/usuarios?id=${user.id}`);
+          const dbUser = await response.json();
+          
+          if (dbUser.length > 0 && dbUser[0].admin) {
+            isAdmin = true;
+          }
+        } catch (err) {
+          console.error('Erro ao verificar permissões:', err);
+        }
+        
         let adminButton = '';
-        if (user.admin) {
+        if (isAdmin) {
           adminButton = '<button class="admin-btn" id="admin-btn">Admin</button>';
         }
+        
         userInfo.innerHTML = `
           ${adminButton}
-          <span>${user.name || user.email}</span>
+          <span>${user.nome || user.email}</span>
           <button class="logout-btn" id="logout-btn">Sair</button>
         `;
       }
@@ -146,8 +161,9 @@
         window.location.href = 'login.html';
       });
 
-      if (user.admin) {
-        document.getElementById('admin-btn').addEventListener('click', () => {
+      const adminBtn = document.getElementById('admin-btn');
+      if (adminBtn) {
+        adminBtn.addEventListener('click', () => {
           window.location.href = 'admin.html';
         });
       }

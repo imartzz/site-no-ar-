@@ -164,6 +164,8 @@
   </div>
 
   <script>
+    const API_URL = 'https://33765672-f51d-46f5-b276-32beaed4448a-00-3qd9ymtpuc1xv.worf.replit.dev:3000';
+    
     document.getElementById('show-register').addEventListener('click', (e) => {
       e.preventDefault();
       document.getElementById('login-form').style.display = 'none';
@@ -180,7 +182,7 @@
     document.getElementById('register-button').addEventListener('click', register);
     document.getElementById('guest-button').addEventListener('click', entrarComoVisitante);
 
-    function login() {
+    async function login() {
       const email = document.getElementById('login-email').value;
       const password = document.getElementById('login-password').value;
       const errorElement = document.getElementById('login-error');
@@ -190,14 +192,35 @@
         return;
       }
       
-      localStorage.setItem('user', JSON.stringify({ 
-        email: email,
-        name: email.split('@')[0] // Usa a parte antes do @ como nome
-      }));
-      window.location.href = 'index.html';
+      try {
+        // Buscar usuário na API
+        const response = await fetch(`${API_URL}/usuarios?email=${email}`);
+        const users = await response.json();
+        
+        if (users.length === 0) {
+          errorElement.textContent = 'Usuário não encontrado';
+          return;
+        }
+        
+        const user = users[0];
+        
+        if (user.senha !== password) {
+          errorElement.textContent = 'Senha incorreta';
+          return;
+        }
+        
+        // Armazenar dados do usuário sem a senha
+        const { senha, ...userData } = user;
+        localStorage.setItem('user', JSON.stringify(userData));
+        window.location.href = 'index.html';
+        
+      } catch (err) {
+        console.error('Erro ao fazer login:', err);
+        errorElement.textContent = 'Erro ao fazer login. Tente novamente.';
+      }
     }
 
-    function register() {
+    async function register() {
       const name = document.getElementById('register-name').value;
       const email = document.getElementById('register-email').value;
       const password = document.getElementById('register-password').value;
@@ -215,12 +238,42 @@
         return;
       }
       
-      localStorage.setItem('user', JSON.stringify({ 
-        name: name, 
-        email: email,
-        admin: isAdmin
-      }));
-      window.location.href = 'index.html';
+      try {
+        // Verificar se email já existe
+        const response = await fetch(`${API_URL}/usuarios?email=${email}`);
+        const existingUsers = await response.json();
+        
+        if (existingUsers.length > 0) {
+          errorElement.textContent = 'Email já cadastrado';
+          return;
+        }
+        
+        // Criar novo usuário
+        const newUser = {
+          nome: name,
+          email: email,
+          senha: password,
+          admin: isAdmin
+        };
+        
+        // Salvar na API
+        const postResponse = await fetch(`${API_URL}/usuarios`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(newUser)
+        });
+        
+        const createdUser = await postResponse.json();
+        
+        // Armazenar dados do usuário sem a senha
+        const { senha, ...userData } = createdUser;
+        localStorage.setItem('user', JSON.stringify(userData));
+        window.location.href = 'index.html';
+        
+      } catch (err) {
+        console.error('Erro ao cadastrar:', err);
+        errorElement.textContent = 'Erro ao cadastrar. Tente novamente.';
+      }
     }
 
     function entrarComoVisitante() {
