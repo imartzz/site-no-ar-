@@ -77,9 +77,7 @@
   <script src="favoritos.js"></script>
   <script src="detalhes.js"></script>
   <script>
-    // Verificar login e mostrar informações do usuário
     document.addEventListener('DOMContentLoaded', () => {
-      // Se não tem usuário, redireciona para login
       if (!localStorage.getItem('user')) {
         window.location.href = 'login.html';
         return;
