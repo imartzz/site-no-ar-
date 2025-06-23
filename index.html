@@ -34,8 +34,7 @@
       background: none;
       border: 1px solid var(--text-light);
       color: var(--text-light);
-      padding: 5px 10极
-px;
+      padding: 5px 10px;
       border-radius: 4px;
       cursor: pointer;
     }
@@ -54,7 +53,8 @@ px;
     .admin-btn:hover {
       background: #e68a00;
     }
-    .tabs { display: flex; background: var(--tab-bg); }
+    .tabs { display: flex; background: var(--tab极
+-bg); }
     .tab { padding: 10px 20px; cursor: pointer; }
     .tab.active { background: var(--highlight); font-weight: bold; }
     .main { display: flex; height: calc(100vh - 84px); }
@@ -136,7 +136,6 @@ px;
       const user = JSON.parse(localStorage.getItem('user'));
       const userInfo = document.getElementById('user-info');
       
-      // Visitantes não podem acessar
       if (user.guest) {
         userInfo.innerHTML = `
           <span>Visitante</span>
@@ -345,7 +344,7 @@ px;
         };
 
         const casa = getBestOdd('casa');
-        const empate = jogo.odds.bet365?.empate !== undefined ? getBestOdd('empate') : { value: '-' };
+        const empate = jogo.odds.bet365?.empate !== undefined ? getBestOdd('empate') : { value: '-', casa: '' };
         const fora = getBestOdd('fora');
 
         tr.innerHTML = `

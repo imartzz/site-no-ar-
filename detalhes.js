@@ -142,7 +142,8 @@ function renderizarJogo(jogo, competicao, data, hora) {
             <h3>Empate</h3>
             <p id="votosEmpate">-</p>
           </div>
-          <div class="votacao-option" data-value="${jogo.time_fora}">
+          <div class="v极
+otacao-option" data-value="${jogo.time_fora}">
             <h3>${jogo.time_fora}</h3>
             <p id="votosFora">-</p>
           </div>
@@ -150,7 +151,8 @@ function renderizarJogo(jogo, competicao, data, hora) {
         <button id="botaoVotar">Votar</button>
         <div class="votacao-results">
           <h3>Resultado Parcial</h3>
-          <div id="resultadosBarras"></div>
+          <div id="resultadosBarras"></极
+div>
         </div>
       `}
     </div>
@@ -409,12 +411,22 @@ function renderizarComentarios(comentarios) {
   lista.innerHTML = comentarios
     .filter(c => c.jogoId === jogoId)
     .map(comentario => {
-      const autor = comentario.autor || "Usuário Anônimo";
+      // Usar o nome do usuário se estiver disponível, senão usar o autor
+      let autor = comentario.userName || comentario.autor || "Usuário Anônimo";
+      
+      // Se for um email, pegar a parte antes do @
+      if (autor.includes('@')) {
+        autor = autor.split('@')[0];
+      }
+      
+      // Capitalizar primeira letra
+      autor = autor.charAt(0).toUpperCase() + autor.slice(1);
+      
       const texto = comentario.mensagem || comentario.texto || "";
       let dataComentario;
       
       try {
-        dataComentario = comentario.data ? new Date(comentario.data) : new Date();
+        dataComentario = comentario.data || comentario.date ? new Date(comentario.data || comentario.date) : new Date();
       } catch (e) {
         dataComentario = new Date();
       }
@@ -448,7 +460,8 @@ async function enviarComentario() {
   }
   
   try {
-    const autor = user.name || user.email;
+    // Usar o nome do usuário se estiver disponível, senão usar o email
+    const autor = user.nome || user.email;
     const dataComentario = new Date().toISOString();
     
     await fetch(`${API_URL}/comentarios`, {
@@ -456,7 +469,7 @@ async function enviarComentario() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ 
         jogoId: jogoData.id, 
-        mensagem: texto,
+        texto: texto,
         autor: autor,
         data: dataComentario
       })

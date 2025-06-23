@@ -181,4 +181,4 @@ async function loadData(){
   renderTable(jogos);
 }
 
-document.addEventListener('DOMContentLoaded',loadData);
+document.addEventListener('DOMContentLoaded',loadData);a
